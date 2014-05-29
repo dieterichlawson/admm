@@ -1,0 +1,50 @@
+import breeze.linalg.{DenseVector => BDV, DenseMatrix => BDM}
+import breeze.linalg._
+import breeze.optimize._
+
+val rho = 0.05
+val examples = BDM.rand[Double](10,10)
+val realx = BDV.rand[Double](10)
+val mean = sum(examples*realx)/10
+val b = (examples*realx).map(x => if(x >= mean) 1.0 else -1.0)
+var A = BDM.horzcat(examples,b.toDenseMatrix.t)
+
+def toA(examples: BDM[Double]): BDM[Double] = {
+    examples(*,::).map(ex => {
+        ex(0 to -2) := ex(0 to -2)*ex(-1)
+        ex(-1) *= -1.0
+        ex 
+        })
+    examples
+  }
+
+A = toA(A)
+A = A(::,0 to -2)
+
+val f = new [BDV[Double]] {
+
+  def fval(x: BDV[Double], A: BDM[Double], rho: Double): Double = {
+    sum((A*x + 1.0).map(x => Math.max(x,0.0))) + (rho/2)*Math.pow(norm(x),2.0)
+  }
+
+  def grad(x: BDV[Double], A:BDM[Double], rho: Double): BDV[Double] = {
+    var misclassified = A(*,::).map(row => {
+      if(0.0 <= row.t*x + 1.0) {
+        row 
+      }else {
+        BDV.zeros[Double](10)
+      }
+    })
+    var gradient = sum(misclassified(*,::))
+    gradient += x*rho // - z + u
+  }
+
+  def calculate(x: BDV[Double]) ={
+    (fval(x, A, rho), grad(x,A,rho))
+  }
+}
+
+val lbfgs = new LBFGS[DenseVector[Double]](maxIter=100, m=3)
+lbfgs.minimize(f,BDV.zeros[Double](10))
+
+

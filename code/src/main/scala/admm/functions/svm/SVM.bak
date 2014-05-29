@@ -1,0 +1,22 @@
+package admm.solver.functions.distributed
+
+import breeze.linalg.{DenseVector => BDV, DenseMatrix => BDM}
+import org.apache.spark.rdd.RDD
+import admm.linalg.BlockMatrix
+
+class SVM(data: Margin) 
+  extends DistributedFunction[BDM[Double]](data.splits, 
+                                           data.numSplits, 
+                                           data.length) {
+
+  def prox(state: (BDM[Double], BDV[Double]), z: BDV[Double], u: BDV[Double], rho: Double):
+  BDV[Double] = {
+    val f = new DiffFunction[DenseVector[Double]] {
+      : 
+  }
+  
+  def evaluate(x: BDV[Double]): Double = {
+    return 0.0 
+  }
+}
+

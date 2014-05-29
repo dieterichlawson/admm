@@ -1,0 +1,29 @@
+package admm.solver.functions.distributed
+
+import breeze.linalg.{DenseVector => BDV, DenseMatrix => BDM}
+import org.apache.spark.rdd.RDD
+import admm.linalg.BlockMatrix
+
+class Margin(data: BlockMatrix
+             numSplits: Long,
+             length: Int) 
+             extends DistributedFunction[BDM[Double]](data.splits.map(toA), numSplits, length) {
+
+  def prox(A: BDM[Double], z: BDV[Double], u: BDV[Double], rho: Double):
+  BDV[Double] = {
+    return BDV.zeros[Double](length)
+  }
+  
+  def evaluate(x: BDV[Double]): Double = {
+    return 0.0 
+  }
+  
+  def toA(examples: BDM[Double]): BDM[Double] = {
+    examples(*,::).map(ex => {
+      ex(0 to -2) := ex(0 to -2)*ex(-1)
+      ex(-1) *= -1.0
+      ex 
+    })
+    examples
+  }
+}

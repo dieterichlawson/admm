@@ -38,10 +38,10 @@ import org.apache.spark.Logging
 object LassoExample extends App with Logging{
 
   case class Params(
-    Afile: String = "/Users/dlaw/class/ee364b/project/spark-testing/lasso/A.csv",
+    Afile: String = "A.csv",
     master: String = "local",
-    spark_home: String = "/root/spark",
-    scratch_dir: String = "hdfs://ec2-107-20-62-201.compute-1.amazonaws.com:9000/root/scratch",
+    spark_home: String = "~/dev/spark",
+    scratch_dir: String = "~/foo",
     maxiters: Int = 300,
     blocksize: Int = 1024,
     lambda: Double = 0.5,
@@ -95,7 +95,7 @@ object LassoExample extends App with Logging{
     val conf = new SparkConf()
       .setMaster(params.master)
       .setSparkHome(params.spark_home)
-      .setJars(List("/root/admm/code/target/scala-2.10/ADMM-assembly-1.0.jar"))
+      //.setJars(List("/root/admm/code/target/scala-2.10/ADMM-assembly-1.0.jar"))
       .setAppName("ADMM Lasso")
       .set("spark.executor.memory", "6g")
       .set("spark.default.parallelism", "8")

@@ -10,8 +10,7 @@ class L2NormSquared(val A: BDM[Double],
                     val rho: Double) extends ProxableFunction(A.cols) {
 
   lazy val factor = {
-    val qrfac = qr(A.t*A + BDM.eye[Double](A.cols)*rho)
-    qrfac._1 \ qrfac._2.t
+    inv(A.t*A + BDM.eye[Double](A.cols)*rho)
   }
   
   def prox(x: BDV[Double], rho: Double): BDV[Double] = {

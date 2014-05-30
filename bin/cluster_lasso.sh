@@ -2,6 +2,9 @@
 AWS_HOSTNAME="$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)"
 cd "$(dirname "$0")"
 cd ../code
+echo "Removing scratch directory"
+../../ephemeral-hdfs/bin/hadoop fs -rmr /root/scratch
+../../ephemeral-hdfs/bin/hadoop fs -mkdir /root/scratch
 sbt "runMain admm.LassoExample
     --Afile hdfs://$AWS_HOSTNAME:9000/root/matrix/Big.csv \
     --scratch_dir hdfs://$AWS_HOSTNAME:9000/root/scratch \

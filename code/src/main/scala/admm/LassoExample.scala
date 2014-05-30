@@ -25,6 +25,7 @@ import breeze.linalg._
 
 import admm.functions._
 import admm.solver.ConsensusADMMSolver
+import admm.linalg.BlockMatrix
 
 /**
  * An example app for lasso. Run with
@@ -37,6 +38,8 @@ object LassoExample extends App {
 
   case class Params(
       Afile: String = "/Users/dlaw/class/ee364b/project/spark-testing/lasso/A.csv",
+      master: String = "local",
+      spark_home: String = "/root/spark",
       maxiters: Int = 300,
       blocksize: Int = 1024,
       lambda: Double = 0.5,
@@ -51,6 +54,12 @@ object LassoExample extends App {
     opt[Int]("maxiters")
       .text("max number of iterations")
       .action((x, c) => c.copy(maxiters = x))
+    opt[String]("master")
+      .text(s"master node URL, default: ${defaultParams.master}")
+      .action((x, c) => c.copy(master= x))
+    opt[String]("spark_home")
+      .text(s"spark_home, default: ${defaultParams.spark_home}")
+      .action((x, c) => c.copy(spark_home= x))
     opt[Int]("blocksize")
       .text("Size of block matrices")
       .action((x, c) => c.copy(blocksize = x))
@@ -78,12 +87,10 @@ object LassoExample extends App {
   }
 
   def run(params: Params) {
-    val conf = new SparkConf().setAppName("ADMM Lasso with $params").
-                               setMaster("local")
-    val sc = new SparkContext(conf)
-    sc.setCheckpointDir("/Users/dlaw/school/spr_2014/ee364b/project/code/scratch")
-    val A = sc.textFile(params.Afile)
-    val f = L2NormSquared.fromTextFile(A)
+    val sc = new SparkContext(params.master, params.spark_home, "ADMM Lasso")
+    val t = sc.textFile(params.Afile)
+    val A = new BlockMatrix(t, params.blocksize)
+    val f = L2NormSquared.fromMatrix(A)
     //val g = new GeqScalar(2.0)
     val g = new L1Norm(params.lambda)
     var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc)

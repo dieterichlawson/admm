@@ -1,0 +1,25 @@
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+
+import breeze.linalg._
+import breeze.linalg.{DenseVector => BDV, DenseMatrix => BDM}
+
+import admm.functions._
+import admm.solver.ConsensusADMMSolver
+import admm.linalg.BlockMatrix
+
+val sc = new SparkContext("local","ADMM", "/root/spark", List("/root/admm/code/target/scala-2.10/admm_2.10-1.0.jar"))
+val t = sc.textFile("hdfs://ec2-107-20-62-201.compute-1.amazonaws.com:9000/root/matrix/C.csv")
+val A = new BlockMatrix(t,1024)
+
+
+val A = BlockMatrix.rand(50000,5000,1024,sc)
+A.blocks.saveAsObjectFile("hdfs://ec2-107-20-62-201.compute-1.amazonaws.com:9000/root/matrix/A.txt")
+
+def splits(nRows:Int, nCols: Int, blockHeight: Int): Seq[(Int,Int)] = {
+  var numBlocks = nRows / blockHeight
+  if(nRows % blockHeight != 0 && blockHeight < nRows){
+    numBlocks += 1
+  }
+  (1 to numBlocks).map(x => if(x < numBlocks) (blockHeight,nCols) else (nRows % blockHeight,nCols))
+}

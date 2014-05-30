@@ -25,4 +25,10 @@ object L2NormSquared {
       map(X => new L2NormSquared(X(::, 0 to -2), X(::,-1).toDenseVector))
     new RDF[L2NormSquared](fns, 0L, fns.first.length) 
   }
+
+  def fromMatrix(A: BlockMatrix): RDF[L2NormSquared] = {
+    val x = BDV.rand[Double](A.numCols.toInt)
+    val fns = A.blocks.map(X => new L2NormSquared(X, X*x))
+    new RDF[L2NormSquared](fns, 0L, fns.first.length) 
+  }
 }

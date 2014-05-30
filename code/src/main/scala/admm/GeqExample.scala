@@ -77,7 +77,7 @@ object GeqExample extends App {
     val sc = new SparkContext(conf)
     sc.setCheckpointDir("/Users/dlaw/school/spr_2014/ee364b/project/code/scratch")
     val A = sc.textFile(params.Afile)
-    val f = L2NormSquared.fromTextFile(A)
+    val f = L2NormSquared.fromTextFile(A, params.rho)
     val g = new GeqScalar(params.geq)
     var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc)
     admm.solve(params.rho, params.maxiters)

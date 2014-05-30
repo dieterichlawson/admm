@@ -6,12 +6,16 @@ import breeze.linalg._
 import breeze.linalg.{DenseVector => BDV, DenseMatrix => BDM}
 
 class L2NormSquared(val A: BDM[Double],
-                    val b: BDV[Double]) extends ProxableFunction(A.cols) {
+                    val b: BDV[Double],
+                    val rho: Double) extends ProxableFunction(A.cols) {
 
-  val I = BDM.eye[Double](A.cols)
-
+  lazy val factor = {
+    val qrfac = qr(A.t*A + BDM.eye[Double](A.cols)*rho)
+    qrfac._1 \ qrfac._2.t
+  }
+  
   def prox(x: BDV[Double], rho: Double): BDV[Double] = {
-    ((A.t*A + I*rho) \ (A.t*b + x*rho)).toDenseVector
+    (factor * (A.t*b + x*rho)).toDenseVector
   }
 
   def apply(x: BDV[Double]): Double = {
@@ -20,15 +24,15 @@ class L2NormSquared(val A: BDM[Double],
 }
 
 object L2NormSquared {
-  def fromTextFile(file: RDD[String], blockHeight: Int = 1024): RDF[L2NormSquared] = {
+  def fromTextFile(file: RDD[String], rho: Double, blockHeight: Int = 1024): RDF[L2NormSquared] = {
     val fns = new BlockMatrix(file, blockHeight).blocks.
-      map(X => new L2NormSquared(X(::, 0 to -2), X(::,-1).toDenseVector))
+      map(X => new L2NormSquared(X(::, 0 to -2), X(::,-1).toDenseVector, rho))
     new RDF[L2NormSquared](fns, 0L, fns.first.length) 
   }
 
-  def fromMatrix(A: BlockMatrix): RDF[L2NormSquared] = {
+  def fromMatrix(A: BlockMatrix, rho: Double): RDF[L2NormSquared] = {
     val x = BDV.rand[Double](A.numCols.toInt)
-    val fns = A.blocks.map(X => new L2NormSquared(X, X*x))
+    val fns = A.blocks.map(X => new L2NormSquared(X, X*x, rho))
     new RDF[L2NormSquared](fns, 0L, fns.first.length) 
   }
 }

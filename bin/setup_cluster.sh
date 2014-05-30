@@ -13,7 +13,9 @@ echo "Creating HDFS Dirs"
 ../../ephemeral-hdfs/bin/hadoop fs -mkdir /root/scratch
 ../../ephemeral-hdfs/bin/hadoop fs -mkdir /root/matrix
 
-echo "Creating 1e5 x 5e4 Matrix"
 cd ../util
 scalac CreateMatrix.scala
-scala CreateMat 100000 5000 | ../../ephemeral-hdfs/bin/hadoop fs -put - /root/scratch/matrix/A.csv
+echo "Creating 1e4 x 5e2 Matrix"
+scala CreateMat 10000 500 | ../../ephemeral-hdfs/bin/hadoop fs -put - /root/matrix/small.csv
+echo "Creating 1e5 x 5e4 Matrix"
+scala CreateMat 100000 5000 | ../../ephemeral-hdfs/bin/hadoop fs -put - /root/matrix/A.csv

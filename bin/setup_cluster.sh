@@ -15,5 +15,5 @@ echo "Creating HDFS Dirs"
 
 echo "Creating 1e5 x 5e4 Matrix"
 cd ../util
-scalac CreateMatrix.class
+scalac CreateMatrix.scala
 scala CreateMat 100000 5000 | ../../ephemeral-hdfs/bin/hadoop fs -put - /root/scratch/matrix/A.csv

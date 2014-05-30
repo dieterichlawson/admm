@@ -26,6 +26,7 @@ import breeze.linalg._
 import admm.functions._
 import admm.solver.ConsensusADMMSolver
 import admm.linalg.BlockMatrix
+import org.apache.spark.Logging
 
 /**
  * An example app for lasso. Run with
@@ -34,7 +35,7 @@ import admm.linalg.BlockMatrix
  * }}}
  * If you use it as a template to create your own app, please use `spark-submit` to submit your app.
  */
-object LassoExample extends App {
+object LassoExample extends App with Logging{
 
   case class Params(
     Afile: String = "/Users/dlaw/class/ee364b/project/spark-testing/lasso/A.csv",

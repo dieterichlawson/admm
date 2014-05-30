@@ -8,14 +8,14 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import org.apache.spark.storage._
 import org.apache.spark.broadcast._
-import shapeless.syntax.std.tuple._
 import admm.functions._
 
 class ConsensusADMMSolver(val f: RDF[_],
                           val g: ProxableFunction,
                           val absTol: Double = 10e-3,
                           val relTol: Double = 10e-3,
-                          @transient val sc: SparkContext) 
+                          @transient val sc: SparkContext,
+                          @transient val scratch_dir: String = "/scratch") 
                           extends Serializable with Logging{
 
   f.splits.persist()
@@ -51,11 +51,10 @@ class ConsensusADMMSolver(val f: RDF[_],
   }
 
   def truncateRDDLineage= {
-    val dir = sc.getCheckpointDir getOrElse ""
-    x_i.saveAsObjectFile(dir+"/x_i"+iters)
-    x_i = sc.objectFile(dir+"/x_i"+iters)
-    u_i.saveAsObjectFile(dir+"/u_i"+iters)
-    u_i = sc.objectFile(dir+"/u_i"+iters)
+    x_i.saveAsObjectFile(scratch_dir+"/x_i"+iters)
+    x_i = sc.objectFile[BDV[Double]](scratch_dir+"/x_i"+iters)
+    u_i.saveAsObjectFile(scratch_dir+"/u_i"+iters)
+    u_i = sc.objectFile[BDV[Double]](scratch_dir+"/u_i"+iters)
   }
 
   def primalTolerance: Double = {

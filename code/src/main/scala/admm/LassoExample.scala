@@ -37,16 +37,17 @@ import admm.linalg.BlockMatrix
 object LassoExample extends App {
 
   case class Params(
-      Afile: String = "/Users/dlaw/class/ee364b/project/spark-testing/lasso/A.csv",
-      master: String = "local",
-      spark_home: String = "/root/spark",
-      maxiters: Int = 300,
-      blocksize: Int = 1024,
-      lambda: Double = 0.5,
-      rho: Double = 0.1,
-      abstol: Double = 1e-3,
-      reltol: Double = 1e-3)
-
+    Afile: String = "/Users/dlaw/class/ee364b/project/spark-testing/lasso/A.csv",
+    master: String = "local",
+    spark_home: String = "/root/spark",
+    scratch_dir: String = "hdfs://ec2-107-20-62-201.compute-1.amazonaws.com:9000/root/scratch",
+    maxiters: Int = 300,
+    blocksize: Int = 1024,
+    lambda: Double = 0.5,
+    rho: Double = 0.1,
+    abstol: Double = 1e-3,
+    reltol: Double = 1e-3)
+  
   val defaultParams = Params()
 
   val parser = new OptionParser[Params]("Lasso") {
@@ -60,6 +61,9 @@ object LassoExample extends App {
     opt[String]("spark_home")
       .text(s"spark_home, default: ${defaultParams.spark_home}")
       .action((x, c) => c.copy(spark_home= x))
+    opt[String]("scratch_dir")
+      .text(s"scratch_dir, default: ${defaultParams.scratch_dir}")
+      .action((x, c) => c.copy(scratch_dir= x))
     opt[Int]("blocksize")
       .text("Size of block matrices")
       .action((x, c) => c.copy(blocksize = x))
@@ -78,7 +82,7 @@ object LassoExample extends App {
     opt[String]("Afile")
       .text(s"input matrix, default: ${defaultParams.Afile}")
       .action((x, c) => c.copy(Afile = x))
-  }
+   }
 
   parser.parse(args, defaultParams).map { params =>
     run(params)
@@ -87,13 +91,19 @@ object LassoExample extends App {
   }
 
   def run(params: Params) {
-    val sc = new SparkContext(params.master, params.spark_home, "ADMM Lasso")
+    val conf = new SparkConf()
+      .setMaster(params.master)
+      .setSparkHome(params.spark_home)
+      .setJars(List("/root/admm/code/target/scala-2.10/ADMM-assembly-1.0.jar"))
+      .setAppName("ADMM Lasso")
+      .set("spark.executor.memory", "6g")
+      .set("spark.default.parallelism", "8")
+    val sc = new SparkContext(conf)
     val t = sc.textFile(params.Afile)
     val A = new BlockMatrix(t, params.blocksize)
     val f = L2NormSquared.fromMatrix(A)
-    //val g = new GeqScalar(2.0)
     val g = new L1Norm(params.lambda)
-    var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc)
+    var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc, params.scratch_dir)
     admm.solve(params.rho, params.maxiters)
     println("Solution: " + admm.z)
     val optval = f(admm.z) + g(admm.z)

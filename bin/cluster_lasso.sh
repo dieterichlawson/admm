@@ -1,10 +1,11 @@
 #!/bin/bash
+AWS_HOSTNAME="$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)"
 cd "$(dirname "$0")"
 cd ../code
 sbt "runMain admm.LassoExample
-    --Afile hdfs://ec2-107-20-62-201.compute-1.amazonaws.com:9000/root/matrix/Big.csv \
-    --scratch_dir hdfs://ec2-107-20-62-201.compute-1.amazonaws.com:9000/root/scratch \
-    --master spark://ec2-107-20-62-201.compute-1.amazonaws.com:7077 \
+    --Afile hdfs://$AWS_HOSTNAME:9000/root/matrix/Big.csv \
+    --scratch_dir hdfs://$AWS_HOSTNAME:9000/root/scratch \
+    --master spark://$AWS_HOSTNAME:7077 \
     --maxiters 500 \
     --blocksize 1024 \
     --abstol 5e-3 \

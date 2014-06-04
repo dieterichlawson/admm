@@ -48,16 +48,8 @@ class ConsensusADMMSolver(val f: RDF[_],
     u = u_i.reduce(_+_) / f.numSplits.toDouble
     z = g.prox(x+u, f.numSplits*rho)
     iters += 1
-   // truncateRDDLineage
   }
 
-/*  def truncateRDDLineage= {
-    x_i.saveAsObjectFile(scratch_dir+"/x_i"+iters)
-    x_i = sc.objectFile[BDV[Double]](scratch_dir+"/x_i"+iters)
-    u_i.saveAsObjectFile(scratch_dir+"/u_i"+iters)
-    u_i = sc.objectFile[BDV[Double]](scratch_dir+"/u_i"+iters)
-  }
-*/
   def primalTolerance: Double = {
     Math.sqrt(f.length)*absTol + relTol*Math.max(norm(x),norm(z))
   }

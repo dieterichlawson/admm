@@ -5,6 +5,9 @@ object CreateMat {
     val numRows = args(0).toInt
       val numCols = args(1).toInt
       for(r <- 1 to numRows){
+        if(r % 1000 == 0){
+          System.err.println(s"$r / $numRows")
+        }
         var line = new StringBuilder()
           for(c  <- 1 to numCols){
             line.append(Random.nextDouble + ",")

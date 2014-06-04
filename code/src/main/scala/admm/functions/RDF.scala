@@ -9,8 +9,6 @@ class RDF[F <: ProxableFunction]
    extends Function1[BDV[Double], Double] with Serializable with Logging{
 
   def prox(x: RDD[BDV[Double]], rho: Double): RDD[BDV[Double]] = {
-//    logInfo("Prox called on RDF")
-//    logInfo("RDF deps:" + numDeps())
     splits.zip(x).map({ case (fn, x_i) => fn.prox(x_i, rho) })
   }
 

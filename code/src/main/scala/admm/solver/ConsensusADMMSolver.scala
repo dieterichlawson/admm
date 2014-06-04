@@ -33,9 +33,13 @@ class ConsensusADMMSolver(val f: RDF[_],
   var iters: Int = 0
 
   def solve(rho: Double, maxIterations: Int = 300){
+    solve(x => rho, maxIterations)    
+  }
+
+  def solve(rho: Int => Double, maxIterations:Int){
     do{
-      iterate(rho)
-    }while(!converged(rho) && iters < maxIterations)
+      iterate(rho(iters+1))
+    }while(!converged(rho(iters+1)) && iters < maxIterations)
   }
               
   def iterate(rho: Double){

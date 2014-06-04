@@ -35,19 +35,8 @@ class BlockMatrix(val blocks: RDD[BDM[Double]],
 }
 object BlockMatrix {
   
-  def rand(nRows: Int, nCols: Int, blockHeight: Int,sc: SparkContext): BlockMatrix= {
-    var numBlocks = nRows / blockHeight
-    if(nRows % blockHeight != 0 && blockHeight < nRows){
-      numBlocks += 1 
-    }
-    var stream = new Iterator[BDM[Double]]{
-      var numSeen = 0
-      def hasNext = numSeen < numBlocks
-      def next = {
-        numSeen +=1
-        BDM.rand[Double](if(numSeen < numBlocks) blockHeight else nRows % blockHeight, nCols)
-      }
-    }.toStream
-    new BlockMatrix(sc.parallelize(stream),nRows, nCols, blockHeight)
+  def rand(nRows: Int, nCols: Int, blockHeight: Int, blocksPerPartition: Int, sc: SparkContext): BlockMatrix= {
+    new BlockMatrix(new RandomMatrix(sc, nRows, nCols, blockHeight, blocksPerPartition)
+                    , nRows, nCols, blockHeight)
   }
 }

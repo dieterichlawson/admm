@@ -4,15 +4,18 @@ import admm.functions._
 import admm.solver.ConsensusADMMSolver
 import admm.linalg.BlockMatrix
 import org.apache.spark.Logging
+import admm.linalg.RandomMatrix
 
-val master_url = "ec2-54-225-39-165.compute-1.amazonaws.com"
+val master_url = "ec2-54-205-108-153.compute-1.amazonaws.com"
 val conf = new SparkConf().
   setMaster(s"spark://$master_url:7077").
   setSparkHome("/root/scratch").
   setJars(List("/root/admm/code/target/scala-2.10/ADMM-assembly-1.0.jar")).
   setAppName("ADMM Lasso").
   set("spark.executor.memory", "11g")
+  
 val sc = new SparkContext(conf)
+sc.setCheckpointDir(s"hdfs://$master_url:9000/root/scratch")
 
 val blocksize = 1024
 val abstol = 1e-5

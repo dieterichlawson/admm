@@ -14,18 +14,17 @@ class ConsensusADMMSolver(val f: RDF[_],
                           val g: ProxableFunction,
                           val absTol: Double = 10e-3,
                           val relTol: Double = 10e-3,
-                          @transient val sc: SparkContext,
-                          @transient val scratch_dir: String = "/scratch") 
+                          @transient val sc: SparkContext)
                           extends Serializable with Logging{
 
-  f.splits.persist()
+  f.splits.cache()
 
   var u_i: RDD[BDV[Double]] = f.splits.map(_ => BDV.zeros[Double](f.length))
-  u_i.persist()
+  u_i.cache()
   var u: BDV[Double] = BDV.zeros[Double](f.length)
 
   var x_i: RDD[BDV[Double]] = f.splits.map(_ => BDV.zeros[Double](f.length))
-  x_i.persist()
+  x_i.cache()
   var x: BDV[Double] = BDV.zeros[Double](f.length)
 
   var z: BDV[Double] = BDV.zeros[Double](f.length)
@@ -42,21 +41,23 @@ class ConsensusADMMSolver(val f: RDF[_],
   def iterate(rho: Double){
     zb = sc.broadcast(z)
     u_i = u_i.zip(x_i).map(ux => {ux._1 + ux._2 - zb.value})
+    u_i.checkpoint()
     x_i = f.prox(u_i.map(ui => {zb.value - ui}), rho)
+    x_i.checkpoint()
     x = x_i.reduce(_+_) / f.numSplits.toDouble
     u = u_i.reduce(_+_) / f.numSplits.toDouble
     z = g.prox(x+u, f.numSplits*rho)
     iters += 1
-    truncateRDDLineage
+   // truncateRDDLineage
   }
 
-  def truncateRDDLineage= {
+/*  def truncateRDDLineage= {
     x_i.saveAsObjectFile(scratch_dir+"/x_i"+iters)
     x_i = sc.objectFile[BDV[Double]](scratch_dir+"/x_i"+iters)
     u_i.saveAsObjectFile(scratch_dir+"/u_i"+iters)
     u_i = sc.objectFile[BDV[Double]](scratch_dir+"/u_i"+iters)
   }
-
+*/
   def primalTolerance: Double = {
     Math.sqrt(f.length)*absTol + relTol*Math.max(norm(x),norm(z))
   }

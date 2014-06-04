@@ -104,7 +104,7 @@ object LassoExample extends App with Logging{
     val A = new BlockMatrix(t, params.blocksize)
     val f = L2NormSquared.fromMatrix(A, params.rho)
     val g = new L1Norm(params.lambda)
-    var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc, params.scratch_dir)
+    var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc)
     admm.solve(params.rho, params.maxiters)
     println("Solution: " + admm.z)
     val optval = f(admm.z) + g(admm.z)

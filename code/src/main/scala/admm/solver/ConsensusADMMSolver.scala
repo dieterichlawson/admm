@@ -30,18 +30,22 @@ class ConsensusADMMSolver(val f: RDF[_],
   var z: BDV[Double] = BDV.zeros[Double](f.length)
   var zb: Broadcast[BDV[Double]] = sc.broadcast(z)
 
-  var iters: Int = 0
+  var iter: Int = 0
 
-  def solve(rho: Double, maxIterations: Int = 300){
-    solve(x => rho, maxIterations)    
+  def solve(rho: Double, maxIterations: Int = 300, evalFn: Boolean = false){
+    solve(x => rho, maxIterations, evalFn)    
   }
 
-  def solve(rho: Int => Double, maxIterations:Int){
-    do{
-      iterate(rho(iters+1))
-    }while(!converged(rho(iters+1)) && iters < maxIterations)
+  def solve(rho: Int => Double, maxIterations:Int, evalFn: Boolean){
+    var continue = true
+    while(continue){
+      iter += 1
+      val r = rho(iter)
+      iterate(r)
+      continue = (converged(r, evalFn) || iter >= maxIterations)
+    }
   }
-              
+
   def iterate(rho: Double){
     zb = sc.broadcast(z)
     u_i = u_i.zip(x_i).map(ux => {ux._1 + ux._2 - zb.value})
@@ -51,7 +55,6 @@ class ConsensusADMMSolver(val f: RDF[_],
     x = x_i.reduce(_+_) / f.numSplits.toDouble
     u = u_i.reduce(_+_) / f.numSplits.toDouble
     z = g.prox(x+u, f.numSplits*rho)
-    iters += 1
   }
 
   def primalTolerance: Double = {
@@ -70,16 +73,23 @@ class ConsensusADMMSolver(val f: RDF[_],
      Math.sqrt(x_i.map(x_i => Math.pow(norm(x_i - z),2)).reduce(_+_))
   }
 
-  def converged(rho: Double): Boolean = {
+  def converged(rho: Double, evalFn: Boolean): Boolean = {
       val primRes = primalResidual(rho)
       val primTol = primalTolerance
       val dualRes = dualResidual
       val dualTol = dualTolerance(rho)
       val converged = (primRes <= primTol) && 
                       (dualRes <= dualTol)
-      val iternum = iters + 1
-      logInfo(f"Iteration: $iternum | $primRes%.6f / $primTol%.6f | $dualRes%.6f / $dualTol%.6f")
+      if(evalFn){
+        logInfo(f"Iteration: $iter | $fnVal | $primRes%.6f / $primTol%.6f | $dualRes%.6f / $dualTol%.6f")
+      }else{
+        logInfo(f"Iteration: $iter | $primRes%.6f / $primTol%.6f | $dualRes%.6f / $dualTol%.6f")
+      }
       if(converged){ logInfo("CONVERGED") }
       return converged
+  }
+  
+  def fnVal: Double = {
+    f(z) + g(z)
   }
 }

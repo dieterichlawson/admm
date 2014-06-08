@@ -37,12 +37,12 @@ class ConsensusADMMSolver(val f: RDF[_],
   }
 
   def solve(rho: Int => Double, maxIterations:Int, evalFn: Boolean){
-    var continue = true
-    while(continue){
+    var done = false
+    while(!done){
       iter += 1
       val r = rho(iter)
       iterate(r)
-      continue = (converged(r, evalFn) || iter >= maxIterations)
+      done = (converged(r, evalFn) || iter >= maxIterations)
     }
   }
 

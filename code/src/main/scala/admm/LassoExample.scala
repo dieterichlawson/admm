@@ -24,7 +24,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import breeze.linalg._
 
 import admm.functions._
-import admm.solver.ConsensusADMMSolver
+import admm.solver._
 import admm.linalg.BlockMatrix
 import org.apache.spark.Logging
 
@@ -100,17 +100,19 @@ object LassoExample extends App with Logging{
       .set("spark.executor.memory", "6g")
       .set("spark.default.parallelism", "8")
     val sc = new SparkContext(conf)
+    sc.setCheckpointDir(params.scratch_dir)
     val t = sc.textFile(params.Afile)
     val A = new BlockMatrix(t, params.blocksize)
     val f = L2NormSquared.fromMatrix(A, params.rho)
     val g = new L1Norm(params.lambda)
-    var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc)
-    admm.solve(params.rho, params.maxiters)
+    var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc) with Instrumentation
+    admm.solve(params.rho, params.maxiters, true)
     println("Solution: " + admm.z)
     val optval = f(admm.z) + g(admm.z)
     println("**********")
     println("  Optval: " + optval)
     println("**********")
+    admm.printData
     sc.stop()
   }
 }

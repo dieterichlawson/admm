@@ -28,6 +28,8 @@ import admm.solver._
 import admm.linalg.BlockMatrix
 import org.apache.spark.Logging
 
+import breeze.linalg.{DenseMatrix => BDM, DenseVector => BDV}
+
 /**
  * An example app for lasso. Run with
  * {{{
@@ -103,8 +105,15 @@ object LassoExample extends App with Logging{
       .set("spark.default.parallelism", "8")
     val sc = new SparkContext(conf)
     sc.setCheckpointDir(params.scratch_dir)
-    val t = sc.textFile(params.Afile)
-    val A = new BlockMatrix(t, params.blocksize)
+    val numWorkers = 8
+    val coresPerWorker = 4
+    val tasksPerCore = 3
+    val parallelism = numWorkers* coresPerWorker*tasksPerCore
+
+    val A = sc.parallelize(1 to 200, parallelism).map(x => BDM.rand[Double](500,500))
+    A.checkpoint
+    A.cache
+    A.count
     val f = L2NormSquared.fromMatrix(A, params.rho)
     val g = new L1Norm(params.lambda)
     var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc) with Instrumentation

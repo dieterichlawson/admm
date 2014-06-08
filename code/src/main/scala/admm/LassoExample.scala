@@ -96,6 +96,8 @@ object LassoExample extends App with Logging{
       .setMaster(params.master)
       .setSparkHome(params.spark_home)
       //.setJars(List("/root/admm/code/target/scala-2.10/ADMM-assembly-1.0.jar"))
+      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+      .set("spark.kryo.registrator", "admm.ADMMKryoRegistrator")
       .setAppName("ADMM Lasso")
       .set("spark.executor.memory", "6g")
       .set("spark.default.parallelism", "8")

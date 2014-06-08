@@ -7,7 +7,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 class BlockMatrix(val blocks: RDD[BDM[Double]],
                   var nRows: Long,
                   var nCols: Int,
-                  val blockHeight: Int){
+                  val blockHeight: Int) extends Serializable{
 
 
   def this(file: RDD[String], blockHeight: Int = 1024) = 

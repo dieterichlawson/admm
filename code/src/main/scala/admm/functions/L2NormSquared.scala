@@ -29,9 +29,9 @@ object L2NormSquared {
     new RDF[L2NormSquared](fns, 0L, fns.first.length) 
   }
 
-  def fromMatrix(A: BlockMatrix, rho: Double): RDF[L2NormSquared] = {
-    val x = BDV.rand[Double](A.numCols.toInt)
-    val fns = A.blocks.map(X => new L2NormSquared(X, X*x, rho))
+  def fromMatrix(A: RDD[BDV[Double]], rho: Double): RDF[L2NormSquared] = {
+    val x = BDV.rand[Double](A.first.cols)
+    val fns = A.map(X => new L2NormSquared(X, X*x, rho))
     new RDF[L2NormSquared](fns, 0L, fns.first.length) 
   }
 }

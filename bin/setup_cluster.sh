@@ -3,7 +3,7 @@
 cd "$(dirname "$0")"
 echo "Installing SBT"
 wget http://repo.scala-sbt.org/scalasbt/sbt-native-packages/org/scala-sbt/sbt//0.12.4/sbt.rpm
-yum install sbt-0.12.4.rpm
+yum install sbt.rpm
 
 echo "Assembling code"
 cd ../code

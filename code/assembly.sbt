@@ -6,6 +6,7 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>  {
   case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
   case PathList("org", "apache", "commons", xs @ _*) => MergeStrategy.first
   case PathList("com", "esotericsoftware", "minlog", xs @ _*) => MergeStrategy.first
+  case "Liftable$$anon$1.class" => MergeStrategy.first
   case PathList("META-INF", "ECLIPSEF.RSA", xs @ _*) => MergeStrategy.first
   case PathList("META-INF", "mailcap", xs @ _*) => MergeStrategy.first
   case "plugin.properties" => MergeStrategy.first

@@ -1,0 +1,10 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+AWS_HOSTNAME="$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)"
+ADD_JARS=/root/admm/code/target/scala-2.10/ADMM-assembly-1.0.jar
+#export SPARK_JAVA_OPTS="-Dspark.serializer=org.apache.spark.serializer.KryoSerializer -Dspark.kryo.registrator=admm.ADMMKryoRegistrator -Dspark.kryoserializer.buffer.mb=50"
+
+../../spark/bin/spark-submit \
+          --class "admm.examples.Lasso" \
+          --master spark://$AWS_HOSTNAME:7077 \
+          /root/admm/code/target/scala-2.10/ADMM-assembly-1.0.jar

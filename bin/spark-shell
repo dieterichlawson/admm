@@ -1,0 +1,3 @@
+export ADD_JARS=/root/admm/code/target/scala-2.10/ADMM-assembly-1.0.jar
+export SPARK_JAVA_OPTS="-Dspark.serializer=org.apache.spark.serializer.KryoSerializer -Dspark.kryo.registrator=admm.ADMMKryoRegistrator -Dspark.kryoserializer.buffer.mb=50"
+../../spark/bin/spark-shell --jars /root/admm/code/target/scala-2.10/ADMM-assembly-1.0.jar

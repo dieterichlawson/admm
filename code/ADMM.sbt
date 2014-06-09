@@ -2,21 +2,20 @@ name := "ADMM"
 
 version := "1.0"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.10.3"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "1.0.0"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.0.0" % "provided"
 
-libraryDependencies += "org.apache.spark" %% "spark-mllib" % "1.0.0"
-
-libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "1.0.4"
+libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "1.0.4" % "provided"
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.2.0"
 
-libraryDependencies += "com.github.fommil.netlib" % "all" % "1.1.2"
+libraryDependencies  ++= Seq(
+    "org.scalanlp" %% "breeze" % "0.7",
+    "org.scalanlp" %% "breeze-natives" % "0.7"
+)
 
-libraryDependencies += "org.scalanlp" % "breeze_2.10" % "0.8"
-
-libraryDependencies += "org.scalanlp" % "breeze-natives_2.10" % "0.8"
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.2.0"
 
 resolvers += Resolver.sonatypeRepo("public")
 

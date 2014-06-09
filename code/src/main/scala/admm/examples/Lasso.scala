@@ -20,38 +20,83 @@ package admm.examples
 import org.apache.spark.{SparkConf, SparkContext}
 import breeze.linalg.{DenseMatrix => BDM, DenseVector => BDV}
 import breeze.linalg._
+import breeze.linalg.operators._
 import admm.functions._
 import admm.linalg._
 import admm.solver._
-
+import scopt.OptionParser
 
 object Lasso {
+
+  case class Params(
+    numblocks: Int = 100,
+    blockheight: Int = 500,
+    maxiters: Int = 300,
+    lambda: Double = 0.5,
+    rho: Double = 0.1,
+    abstol: Double = 1e-3,
+    reltol: Double = 1e-3
+  )
+
+  val defaultParams = Params()
+
+  val parser = new OptionParser[Params]("Lasso") {
+    head("Lasso: An example app for ADMM Lasso.")
+    opt[Int]("numblocks")
+    .text(s"number of blockheightx500 blocks, default: ${defaultParams.numblocks}")
+    .action((x,c) => c.copy(numblocks= x))
+    opt[Int]("blockheight")
+    .text(s"height of each block, default: ${defaultParams.blockheight}")
+    .action((x,c) => c.copy(blockheight= x))
+    opt[Int]("maxiters")
+    .text(s"maximum iterations for solver, default: ${defaultParams.maxiters}")
+    .action((x,c) => c.copy(maxiters= x))
+    opt[Double]("lambda")
+    .text(s"the l1 regularization weight, default: ${defaultParams.lambda}")
+    .action((x,c) => c.copy(lambda= x))
+    opt[Double]("rho")
+    .text(s"step size, default: ${defaultParams.rho}")
+    .action((x,c) => c.copy(rho= x))
+    opt[Double]("abstol")
+    .text(s"absolute tolerance, default: ${defaultParams.abstol}")
+    .action((x,c) => c.copy(abstol= x))
+    opt[Double]("reltol")
+    .text(s"relative tolerance, default: ${defaultParams.reltol}")
+    .action((x,c) => c.copy(reltol= x))
+  }
+ 
   def main(args: Array[String]){
+    parser.parse(args, defaultParams).map { params =>
+      run(params)
+    } getOrElse {
+      sys.exit(1)
+    }
+  }
+
+  def run(params: Params){
     val conf = new SparkConf().setAppName("Lasso")
     val sc = new SparkContext(conf)
-    sc.setCheckpointDir("hdfs://ec2-54-82-182-191.compute-1.amazonaws.com:9000/root/scratch")
-    sc.addJar("/root/admm/code/target/scala-2.10/ADMM-assembly-1.0.jar") 
+    sc.setCheckpointDir(s"hdfs://${sc.master.substring(8,sc.master.length-5)}:9000/root/scratch")
+
     val numWorkers = 8
     val coresPerWorker = 4
-    val tasksPerCore = 2
+    val tasksPerCore = 3 
     val parallelism = numWorkers* coresPerWorker*tasksPerCore
 
-    val A = sc.parallelize(1 to 200, parallelism).map(x => BDM.rand[Double](500,500))
+    val A = sc.parallelize(1 to params.numblocks,params.numblocks).map(x => BDM.rand[Double](params.blockheight,500))
     A.checkpoint
-    A.cache
-    A.count
 
-    val rho = 0.01
-    val lambda = 0.5
-
-    val sol = sc.broadcast(BDV.rand[Double](A.first.cols))
-    val fns = A.map(X => new L2NormSquared(X, X*sol.value, rho))
-    val f = new RDF[L2NormSquared](fns, 0L, fns.first.length) 
+    val f = L2NormSquared.fromMatrix(A,params.rho)
     f.splits.cache
     f.splits.count
 
-    val g = new L1Norm(lambda)
-    var admm = new ConsensusADMMSolver(f, g, 1e-3, 1e-3, sc) with Instrumentation
-    admm.solve(rho,500)
+    val g = new L1Norm(params.lambda)
+    var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc) with Instrumentation
+    val t0 = System.nanoTime()
+    admm.solve(params.rho,params.maxiters)
+    val t1 = System.nanoTime()
+    println(s"Total solve took ${(t1-t0)/1e9} seconds")
+    admm.printData
+    sc.stop
   }
 }

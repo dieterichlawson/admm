@@ -4,5 +4,4 @@ cd ~/dev/spark/ec2
                 --instance-type=m3.xlarge \
                 --slaves=8 \
                 --spark-version=1.0.0 \
-                --resume \
                 launch lassotest

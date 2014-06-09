@@ -27,6 +27,9 @@ class ConsensusADMMSolver(val f: RDF[_],
   x_i.cache()
   var x: BDV[Double] = BDV.zeros[Double](f.length)
 
+  var r_i: RDD[Double] = f.splits.map(_ => 0)
+  var r: Double = 0
+
   var z: BDV[Double] = BDV.zeros[Double](f.length)
   var zb: Broadcast[BDV[Double]] = sc.broadcast(z)
 
@@ -48,12 +51,15 @@ class ConsensusADMMSolver(val f: RDF[_],
 
   def iterate(rho: Double){
     zb = sc.broadcast(z)
-    u_i = u_i.zip(x_i).map(ux => {ux._1 + ux._2 - zb.value})
+    val u_r = u_i.zip(x_i).map(ux => (ux._1 + ux._2 - zb.value, Math.pow(norm(ux._2 - zb.value),2)))
+    u_i = u_r.map(a => a._1)
+    r_i = u_r.map(a => a._2)
     u_i.checkpoint()
     x_i = f.prox(u_i.map(ui => {zb.value - ui}), rho)
     x_i.checkpoint()
     x = x_i.reduce(_+_) / f.numSplits.toDouble
     u = u_i.reduce(_+_) / f.numSplits.toDouble
+    r = Math.sqrt(r_i.reduce(_+_))
     z = g.prox(x+u, f.numSplits*rho)
   }
 
@@ -70,7 +76,7 @@ class ConsensusADMMSolver(val f: RDF[_],
   }
 
   def dualResidual: Double = {
-     Math.sqrt(x_i.map(x_i => Math.pow(norm(x_i - z),2)).reduce(_+_))
+    r
   }
 
   def converged(rho: Double, evalFn: Boolean): Boolean = {

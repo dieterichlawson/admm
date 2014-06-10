@@ -4,8 +4,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.Logging
 import breeze.linalg.{DenseVector => BDV, DenseMatrix => BDM}
 
-class RDF[F <: ProxableFunction]
-  (val splits: RDD[F], var nSplits: Long, val length: Int)
+class RDF[F <: Function1[BDV[Double],Double] with Prox]
+  (val splits: RDD[F], var nSplits: Long)
    extends Function1[BDV[Double], Double] with Serializable with Logging{
 
   def prox(x: RDD[BDV[Double]], rho: Double): RDD[BDV[Double]] = {

@@ -14,7 +14,7 @@ class ADMMKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[ElasticNet])
     kryo.register(classOf[GeqScalar])
     kryo.register(classOf[L2NormSquared])
-    kryo.register(classOf[ProxableFunction])
+    kryo.register(classOf[Prox])
     kryo.register(classOf[Zero])
   }
 }

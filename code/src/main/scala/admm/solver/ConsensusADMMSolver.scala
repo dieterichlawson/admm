@@ -11,7 +11,8 @@ import org.apache.spark.broadcast._
 import admm.functions._
 
 class ConsensusADMMSolver(val f: RDF[_],
-                          val g: ProxableFunction,
+                          val g: Function1[BDV[Double],Double] with Prox,
+                          val n: Int,
                           val absTol: Double = 10e-3,
                           val relTol: Double = 10e-3,
                           @transient val sc: SparkContext)
@@ -19,18 +20,18 @@ class ConsensusADMMSolver(val f: RDF[_],
 
   f.splits.cache()
 
-  var u_i: RDD[BDV[Double]] = f.splits.map(_ => BDV.zeros[Double](f.length))
+  var u_i: RDD[BDV[Double]] = f.splits.map(_ => BDV.zeros[Double](n))
   u_i.cache()
-  var u: BDV[Double] = BDV.zeros[Double](f.length)
+  var u: BDV[Double] = BDV.zeros[Double](n)
 
-  var x_i: RDD[BDV[Double]] = f.splits.map(_ => BDV.zeros[Double](f.length))
+  var x_i: RDD[BDV[Double]] = f.splits.map(_ => BDV.zeros[Double](n))
   x_i.cache()
-  var x: BDV[Double] = BDV.zeros[Double](f.length)
+  var x: BDV[Double] = BDV.zeros[Double](n)
 
   var r_i: RDD[Double] = f.splits.map(_ => 0)
   var r: Double = 0
 
-  var z: BDV[Double] = BDV.zeros[Double](f.length)
+  var z: BDV[Double] = BDV.zeros[Double](n)
   var zb: Broadcast[BDV[Double]] = sc.broadcast(z)
 
   var iter: Int = 0
@@ -64,7 +65,7 @@ class ConsensusADMMSolver(val f: RDF[_],
   }
 
   def primalTolerance: Double = {
-    Math.sqrt(f.length)*absTol + relTol*Math.max(norm(x),norm(z))
+    Math.sqrt(n)*absTol + relTol*Math.max(norm(x),norm(z))
   }
 
   def primalResidual(rho: Double): Double = {
@@ -72,7 +73,7 @@ class ConsensusADMMSolver(val f: RDF[_],
   }
 
   def dualTolerance(rho: Double): Double = {
-    Math.sqrt(f.length)*absTol + relTol*norm(u*rho)
+    Math.sqrt(n)*absTol + relTol*norm(u*rho)
   }
 
   def dualResidual: Double = {

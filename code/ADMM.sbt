@@ -4,9 +4,9 @@ version := "1.0"
 
 scalaVersion := "2.10.3"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "1.0.0" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.0.0" 
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "1.0.4" % "provided"
+libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "1.0.4" 
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.2.0"
 

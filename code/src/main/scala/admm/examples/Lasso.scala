@@ -76,8 +76,11 @@ object Lasso {
   def run(params: Params){
     val conf = new SparkConf().setAppName("Lasso")
     val sc = new SparkContext(conf)
-    sc.setCheckpointDir(s"hdfs://${sc.master.substring(8,sc.master.length-5)}:9000/root/scratch")
-
+    if(sc.master.equals("local")){
+      sc.setCheckpointDir("/Users/dlaw/foo")
+    }else{
+       sc.setCheckpointDir(s"hdfs://${sc.master.substring(8,sc.master.length-5)}:9000/root/scratch")
+    }
     val numWorkers = 8
     val coresPerWorker = 4
     val tasksPerCore = 3 
@@ -91,7 +94,7 @@ object Lasso {
     f.splits.count
 
     val g = new L1Norm(params.lambda)
-    var admm = new ConsensusADMMSolver(f, g, params.abstol, params.reltol, sc) with Instrumentation
+    var admm = new ConsensusADMMSolver(f, g, 500, params.abstol, params.reltol, sc) with Instrumentation
     val t0 = System.nanoTime()
     admm.solve(params.rho,params.maxiters)
     val t1 = System.nanoTime()

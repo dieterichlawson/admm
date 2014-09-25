@@ -33,7 +33,7 @@ trait Instrumentation extends ConsensusADMMSolver {
   }
 
   override def dualResidual: Double = {
-     store("dualResidual",{ time("calcDualResidualTime",{ super.dualResidual })} )
+     store("dualResidual",{ super.dualResidual }) 
   }
 
   override def fnVal: Double = {
@@ -55,6 +55,7 @@ trait Instrumentation extends ConsensusADMMSolver {
   }
 
   def printData = {
+    println("iteration,dualResidual,dualTolerance,primalResidual,primalTolerance,iterTime")
     iterData.map(printIterData) 
   }
 
@@ -62,7 +63,7 @@ trait Instrumentation extends ConsensusADMMSolver {
     val str = data("iter") +"," +
               data("dualResidual") + "," + data("dualTolerance") + "," +
               data("primalResidual") + "," + data("primalTolerance") + "," +
-              data("iterTime") + "," + data("calcDualResidualTime")
+              data("iterTime") 
   println(str)
   }
 }

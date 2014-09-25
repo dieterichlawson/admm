@@ -4,7 +4,9 @@ version := "1.0"
 
 scalaVersion := "2.10.3"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "1.0.0" 
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.1.0-SNAPSHOT" 
+
+libraryDependencies += "org.apache.spark" %% "spark-mllib" % "1.1.0-SNAPSHOT" 
 
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "1.0.4" 
 
@@ -16,6 +18,14 @@ libraryDependencies  ++= Seq(
 )
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.2.0"
+
+libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
+
+libraryDependencies += "com.novocode" % "junit-interface" % "0.10" % "test"
+
+libraryDependencies += "org.scalacheck" % "scalacheck_2.10" % "1.10.0"
+
+resolvers += Resolver.mavenLocal
 
 resolvers += Resolver.sonatypeRepo("public")
 

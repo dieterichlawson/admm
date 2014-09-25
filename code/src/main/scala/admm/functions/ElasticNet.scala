@@ -5,7 +5,7 @@ import breeze.linalg.{DenseVector => BDV}
 
 class ElasticNet(val lambda: Double, 
                  val gamma: Double,
-                 length: Int = 0) extends Function1[BDV[Double],Double] with Prox{
+                 length: Int = 0) extends Function1[BDV[Double],Double] with Prox with Serializable{
   
   def prox(x: BDV[Double], rho: Double): BDV[Double] = {
     x.map(x_i => (1/(1+lambda*gamma))*softThreshold(x_i,lambda/rho))

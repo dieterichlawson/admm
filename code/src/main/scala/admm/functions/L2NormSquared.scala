@@ -4,11 +4,13 @@ import org.apache.spark.rdd.RDD
 import admm.linalg.BlockMatrix
 import breeze.linalg._
 import breeze.linalg.{DenseVector => BDV, DenseMatrix => BDM}
+import org.apache.spark.SparkContext
+import org.apache.spark.storage._
 import org.apache.spark.broadcast._
 
 class L2NormSquared(val A: BDM[Double],
                     val b: BDV[Double],
-                    val rho: Double) extends Function1[BDV[Double],Double] with Prox {
+                    val rho: Double) extends Function1[BDV[Double],Double] with Prox with Serializable{
 
   lazy val factor = {
     inv(A.t*A + BDM.eye[Double](A.cols)*rho)
@@ -31,7 +33,8 @@ object L2NormSquared {
   }
 
   def fromMatrix(A: RDD[BDM[Double]], rho: Double): RDF[L2NormSquared] = {
-    val x = A.context.broadcast(BDV.rand[Double](A.first.cols))
+    val localx = BDV.rand[Double](A.first.cols)
+    val x = A.context.broadcast(localx)
     val fns = A.map(X => new L2NormSquared(X, X*x.value, rho))
     new RDF[L2NormSquared](fns, 0L)
   }

@@ -11,7 +11,7 @@ import org.apache.spark.broadcast._
 import admm.functions._
 
 class ConsensusADMMSolver(val f: RDF[_],
-                          val g: Function1[BDV[Double],Double] with Prox,
+                          val g: Function1[BDV[Double], Double] with Prox with Serializable,
                           val n: Int,
                           val absTol: Double = 10e-3,
                           val relTol: Double = 10e-3,
@@ -29,6 +29,7 @@ class ConsensusADMMSolver(val f: RDF[_],
   var x: BDV[Double] = BDV.zeros[Double](n)
 
   var r_i: RDD[Double] = f.splits.map(_ => 0)
+  r_i.cache()
   var r: Double = 0
 
   var z: BDV[Double] = BDV.zeros[Double](n)
@@ -44,30 +45,31 @@ class ConsensusADMMSolver(val f: RDF[_],
     var done = false
     while(!done){
       iter += 1
-      val r = rho(iter)
-      iterate(r)
-      done = (converged(r, evalFn) || iter >= maxIterations)
+      val iter_rho = rho(iter)
+      iterate(iter_rho)
+      done = converged(iter_rho, evalFn) || iter >= maxIterations
     }
   }
 
   def iterate(rho: Double){
     zb = sc.broadcast(z)
-    val u_r = u_i.zip(x_i).map(ux => (ux._1 + ux._2 - zb.value, Math.pow(norm(ux._2 - zb.value),2)))
-    u_i = u_r.map(a => a._1)
-    r_i = u_r.map(a => a._2)
+    r_i = x_i.map(x => Math.pow(norm(x - zb.value), 2))
+    r_i.checkpoint()
+    u_i = u_i.zip(x_i).map(ux => ux._1 + ux._2 - zb.value)
     u_i.checkpoint()
     x_i = f.prox(u_i.map(ui => {zb.value - ui}), rho)
     x_i.checkpoint()
     x = x_i.reduce(_+_) / f.numSplits.toDouble
     u = u_i.reduce(_+_) / f.numSplits.toDouble
-    r = Math.sqrt(r_i.reduce(_+_))
     z = g.prox(x+u, f.numSplits*rho)
+    r = Math.sqrt(r_i.reduce(_+_))
   }
 
   def primalTolerance: Double = {
     Math.sqrt(n)*absTol + relTol*Math.max(norm(x),norm(z))
   }
 
+  // previous z is stored in zb.value
   def primalResidual(rho: Double): Double = {
     rho*Math.sqrt(f.numSplits)*norm(z - zb.value)
   }
